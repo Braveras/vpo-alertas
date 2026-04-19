@@ -1,0 +1,22 @@
+import json
+from pathlib import Path
+from typing import Set, List
+from models import Listing
+
+DEFAULT_SEEN_FILE = Path(__file__).parent / "seen.json"
+
+
+def load_seen(path: Path = DEFAULT_SEEN_FILE) -> Set[str]:
+    if not path.exists():
+        return set()
+    with open(path) as f:
+        return set(json.load(f))
+
+
+def save_seen(seen: Set[str], path: Path = DEFAULT_SEEN_FILE) -> None:
+    with open(path, "w") as f:
+        json.dump(sorted(seen), f, indent=2)
+
+
+def filter_new(listings: List[Listing], seen: Set[str]) -> List[Listing]:
+    return [l for l in listings if l.id not in seen]
