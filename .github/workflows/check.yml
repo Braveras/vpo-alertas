@@ -23,6 +23,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Configure DNS
+        run: echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+
       - name: Install dependencies
         run: pip install -r requirements.txt
 

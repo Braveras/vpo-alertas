@@ -1,9 +1,12 @@
 import requests
 import logging
+import urllib3
 from bs4 import BeautifulSoup
 from datetime import datetime
 from models import Listing
 from scrapers.keywords import KEYWORDS
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +26,7 @@ def _matches(text: str) -> bool:
 
 def scrape() -> list:
     try:
-        resp = requests.get(URL, headers=HEADERS, timeout=15)
+        resp = requests.get(URL, headers=HEADERS, timeout=15, verify=False)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
         results = []
