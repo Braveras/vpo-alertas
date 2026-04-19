@@ -1,7 +1,7 @@
 import os
 import logging
 from pathlib import Path
-from scrapers import bocm, avs, emvs, idealista, fotocasa
+from scrapers import bocm, avs, emvs
 from storage import load_seen, save_seen, filter_new
 from notifier import send_listing, send_warning
 
@@ -14,7 +14,7 @@ def run(seen_file: Path = Path(__file__).parent / "seen.json") -> None:
     apikey = os.environ["CALLMEBOT_APIKEY"]
 
     all_listings = []
-    for scraper in [bocm, avs, emvs, idealista, fotocasa]:
+    for scraper in [bocm, avs, emvs]:
         results = scraper.scrape()
         logger.info(f"{scraper.__name__}: {len(results)} listings found")
         all_listings.extend(results)
