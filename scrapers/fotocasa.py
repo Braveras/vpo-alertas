@@ -3,6 +3,7 @@ import logging
 from bs4 import BeautifulSoup
 from datetime import datetime
 from models import Listing
+from scrapers.keywords import KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -18,15 +19,6 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Referer": "https://www.fotocasa.es/",
 }
-
-KEYWORDS = [
-    "vpo", "vpp", "vppl",
-    "protección oficial",
-    "precio tasado",
-    "vivienda protegida",
-    "alquiler con opción a compra",
-    "alquiler opción compra",
-]
 
 
 def _matches(text: str) -> bool:

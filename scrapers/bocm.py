@@ -2,21 +2,11 @@ import feedparser
 import logging
 from datetime import datetime
 from models import Listing
+from scrapers.keywords import KEYWORDS
 
 logger = logging.getLogger(__name__)
 
 FEED_URL = "https://www.bocm.es/boletin/boletin_hoy.rss"
-
-KEYWORDS = [
-    "vpo", "vpp", "vppl",
-    "vivienda protección oficial",
-    "vivienda precio tasado",
-    "vivienda protección pública",
-    "vivienda protegida",
-    "alquiler con opción a compra",
-    "alquiler opción compra",
-    "protección oficial",
-]
 
 
 def _matches(text: str) -> bool:

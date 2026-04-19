@@ -18,20 +18,20 @@ def _format_message(listing: Listing) -> str:
     )
 
 
-def _call_api(message: str, phone: str, apikey: str, retries: int = 2) -> bool:
+def _call_api(message: str, phone: str, apikey: str, max_attempts: int = 2) -> bool:
     encoded = quote(message)
     url = f"{CALLMEBOT_URL}?phone={phone}&text={encoded}&apikey={apikey}"
-    for attempt in range(retries):
+    for attempt in range(max_attempts):
         try:
             resp = requests.get(url, timeout=10)
             if resp.status_code == 200:
                 return True
             logger.warning(f"CallMeBot returned {resp.status_code}, attempt {attempt + 1}")
-            if attempt < retries - 1:
+            if attempt < max_attempts - 1:
                 time.sleep(2)
         except Exception as e:
             logger.warning(f"CallMeBot request failed: {e}, attempt {attempt + 1}")
-            if attempt < retries - 1:
+            if attempt < max_attempts - 1:
                 time.sleep(2)
     return False
 

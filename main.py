@@ -29,8 +29,8 @@ def run(seen_file: Path = Path(__file__).parent / "seen.json") -> None:
     logger.info(f"New listings: {len(new_listings)}")
 
     for listing in new_listings:
-        send_listing(listing, phone=phone, apikey=apikey)
-        seen.add(listing.id)
+        if send_listing(listing, phone=phone, apikey=apikey):
+            seen.add(listing.id)
 
     save_seen(seen, seen_file)
 
