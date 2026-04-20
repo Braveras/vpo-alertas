@@ -3,7 +3,6 @@ import logging
 from bs4 import BeautifulSoup
 from datetime import datetime
 from models import Listing
-from scrapers.keywords import KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -15,20 +14,19 @@ HEADERS = {
     "Accept-Language": "es-ES,es;q=0.9",
 }
 
-# Only take external action links (resolutions in BOCM, tramitación portal)
-ALLOWED_HREF_PREFIXES = ("https://www.bocm.es", "https://sede.comunidad.madrid")
+# Only BOCM article PDFs (not bocm.es root or other pages)
+BOCM_ARTICLE_PREFIX = "https://www.bocm.es/boletin/CM_Orden_BOCM/"
+
+# Skip status updates and button links — not new convocatorias
+SKIP_KEYWORDS = [
+    "relación provisional", "admitidos y excluidos", "lista provisional",
+    "admitidos", "excluidos", "accede a", "tramitación",
+]
 
 
-def _matches(text: str) -> bool:
-    return any(kw in text.lower() for kw in KEYWORDS)
-
-
-def _context_matches(a_tag) -> bool:
-    """Check if the surrounding block text contains VPO keywords."""
-    container = a_tag.find_parent(["p", "li", "div", "section", "article"])
-    if container:
-        return _matches(container.get_text())
-    return False
+def _is_skippable(text: str) -> bool:
+    t = text.lower()
+    return any(kw in t for kw in SKIP_KEYWORDS)
 
 
 def scrape() -> list:
@@ -40,16 +38,19 @@ def scrape() -> list:
         seen_urls = set()
         for a in soup.find_all("a", href=True):
             href = a["href"]
-            if not any(href.startswith(p) for p in ALLOWED_HREF_PREFIXES):
+            if not href.startswith(BOCM_ARTICLE_PREFIX):
                 continue
             if href in seen_urls:
                 continue
+            # Build title from link text + nearest heading context
             link_text = a.get_text(strip=True)
-            # use parent block text as title if link text is not informative
+            heading = a.find_previous(["h2", "h3", "h4"])
+            heading_text = heading.get_text(strip=True) if heading else ""
+            title = f"{heading_text} — {link_text}" if heading_text else link_text
+            # Check parent block context for skip keywords (e.g. provisional list)
             container = a.find_parent(["p", "li", "div"])
-            context = container.get_text(" ", strip=True) if container else link_text
-            title = context if len(context) > len(link_text) else link_text
-            if not title:
+            context_text = container.get_text() if container else ""
+            if not title or _is_skippable(title) or _is_skippable(context_text):
                 continue
             seen_urls.add(href)
             results.append(Listing(
