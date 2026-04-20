@@ -15,9 +15,20 @@ HEADERS = {
     "Accept-Language": "es-ES,es;q=0.9",
 }
 
+# Only take external action links (resolutions in BOCM, tramitación portal)
+ALLOWED_HREF_PREFIXES = ("https://www.bocm.es", "https://sede.comunidad.madrid")
+
 
 def _matches(text: str) -> bool:
     return any(kw in text.lower() for kw in KEYWORDS)
+
+
+def _context_matches(a_tag) -> bool:
+    """Check if the surrounding block text contains VPO keywords."""
+    container = a_tag.find_parent(["p", "li", "div", "section", "article"])
+    if container:
+        return _matches(container.get_text())
+    return False
 
 
 def scrape() -> list:
@@ -28,17 +39,22 @@ def scrape() -> list:
         results = []
         seen_urls = set()
         for a in soup.find_all("a", href=True):
-            title = a.get_text(strip=True)
-            if not title or not _matches(title):
-                continue
             href = a["href"]
-            url = href if href.startswith("http") else BASE_URL + href
-            if url in seen_urls:
+            if not any(href.startswith(p) for p in ALLOWED_HREF_PREFIXES):
                 continue
-            seen_urls.add(url)
+            if href in seen_urls:
+                continue
+            link_text = a.get_text(strip=True)
+            # use parent block text as title if link text is not informative
+            container = a.find_parent(["p", "li", "div"])
+            context = container.get_text(" ", strip=True) if container else link_text
+            title = context if len(context) > len(link_text) else link_text
+            if not title:
+                continue
+            seen_urls.add(href)
             results.append(Listing(
                 titulo=title,
-                url=url,
+                url=href,
                 fuente="AVS",
                 fecha=datetime.today().strftime("%Y-%m-%d"),
             ))
